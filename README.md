@@ -36,10 +36,17 @@ Interviews you about the branch you just finished, then generates:
 
 ---
 
-### `/git-commit`
-*(coming soon — migrating from separate repo)*
+### `/git-commit-message`
 
-Generates detailed, descriptive commit messages from your staged diff.
+Generates a conventional commit message from your staged diff.
+Works across all stacks: React, Node, Go, Python, Terraform, Docker, K8s, and more.
+
+**When to use**: After staging changes, before running `git commit`.
+
+```
+/git-commit-message        # full output with 2 alternates
+/git-commit-message short  # subject line only
+```
 
 ---
 
