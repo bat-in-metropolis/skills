@@ -4,21 +4,54 @@ Personal Claude Code skills. Each skill solves a specific friction point in my e
 
 ## Install
 
+Clone the repo and run `make install`:
+
 ```bash
 git clone https://github.com/bat-in-metropolis/skills.git ~/.skills
-ln -s ~/.skills ~/.claude/commands
+cd ~/.skills
+make install
 ```
 
-That's it. All skills become available as slash commands in Claude Code across every repo on your machine.
+This symlinks each skill directory into `~/.claude/skills/` — the location Claude Code auto-discovers user-level slash commands. The skills become available immediately as `/git-commit-message` and `/work-log` across every repo on your machine.
 
-To update:
+To update all skills:
+
 ```bash
-cd ~/.skills && git pull
+cd ~/.skills && make update
+```
+
+To remove:
+
+```bash
+cd ~/.skills && make uninstall
 ```
 
 ---
 
 ## Skills
+
+### `/frontend-audit`
+
+Audits a frontend codebase for stack-specific best-practice violations, then fixes
+them after you approve a plan. It fingerprints the repo along orthogonal axes
+(platform, framework/build, styling, component lib, state) and audits **only what's
+present** — so the same skill covers Next.js (App + Pages Router), React on Vite or
+webpack/CRA, React Native/Expo, and plain HTML/CSS/JS, plus Tailwind, NativeWind,
+shadcn/ui, and Legend State.
+
+**When to use**: Before raising a PR, or when onboarding to / cleaning up a codebase.
+
+```
+/frontend-audit                # detect stack, confirm, pick scope (PR/staged/repo), review → plan → fix
+/frontend-audit legend-state   # scope the audit to one module
+```
+
+The flow: detect (per package, monorepo-aware) → confirm the fingerprint → pick scope
+→ review → present plan → **wait for approval** → fix → verify. Checklist modules live
+in `frontend-audit/checklists/` and load on demand; detection rules are in
+`frontend-audit/detection.md`.
+
+---
 
 ### `/work-log`
 
