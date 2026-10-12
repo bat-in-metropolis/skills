@@ -15,10 +15,24 @@ Report partial adoption first; the micro-checks below are how you find it.
 ## Reactive components (Pillar B)
 
 - **`observer()`** — every component that reads an observable must be wrapped. An unwrapped component reading `.get()` will not re-render reactively.
-- **`<Show>`** — `{obs.cond.get() && <X/>}` re-renders the parent on every change. Use `<Show if={obs.cond}><X/></Show>` — it isolates the toggle. Flag every `&&`/ternary gated on an observable.
+- **`<Show>`** — `{obs.cond.get() && <X/>}` forces the *parent* to depend on `obs.cond` just to decide whether to render `X`. Use `<Show if={obs.cond}><X/></Show>` instead — `Show` tracks `obs.cond` itself, so the parent doesn't need to. Flag every `&&`/ternary gated on an observable **the parent has no other reason to read**.
 - **`<For>`** — `obs.list.get().map(...)` re-renders the whole list on any change. Use `<For each={obs.list}>{item => …}</For>` — it re-renders only changed rows. Flag every `.map()` over an observable array.
 - **`<Switch>`** — if/else or ternary chains on an observable → `<Switch value={obs}><Match .../></Switch>`.
 - **`<Memo>`** — expensive subsections not isolated → wrap in `<Memo>` to freeze them from parent re-renders.
+
+> **Isolation nuance — verify before claiming a fix isolates re-renders.** `observer()` itself
+> wraps the component in `React.memo` (`createReactiveComponent` in `@legendapp/state/react.js`
+> always does `observe ? memo(ret) : ret`) — an `observer()`-wrapped child with stable props
+> (`$`-props, primitives, refs from a stable model instance) *already* bails out of re-rendering
+> when its parent re-renders, with or without `<Show>`. `<Show>` and `<Switch>` are **not**
+> memoized themselves (unlike `<Memo>`, which is literally `memo(fn, () => true)`) — they
+> re-invoke on every parent render regardless of whether children is an element or a function;
+> the function-as-children form only skips constructing the hidden branch, it does not add
+> isolation. So: before reporting "`<Show>` isolates re-renders," check (1) is the child actually
+> `observer()`-wrapped with stable props — if not, `<Show>` alone won't help, wrap the child in
+> `observer()`/`React.memo` too — and (2) does the parent already read the same source
+> reactively for another reason (a sibling prop, a derived value) — if so, `<Show>` isn't saving
+> a subscription the parent didn't already have.
 
 ## Reactive props & two-way binding
 
@@ -30,6 +44,11 @@ Report partial adoption first; the micro-checks below are how you find it.
 - **Granular reads.** `obs.get()` at the top re-renders the whole component on any nested change. Read deep — `obs.user.name.get()` — to re-render only on that field.
 - **`.peek()` for non-reactive reads.** In event handlers and effects use `.peek()`, not `.get()` — `.get()` there creates needless tracking.
 - **No spreading.** `{ ...obs.get() }` snapshots and loses reactivity entirely. Flag it.
+- **No redundant `.get()` on a derived value whose source is already tracked.** If a `computed()`
+  depends only on a field the same render already reads via `.get()` (e.g. `const entity =
+  obs.entity.get()` followed by `const flag = someComputedOfEntity.get()`), the second `.get()`
+  adds a subscription with no additional reactive coverage — the component already re-renders
+  whenever `entity` changes. Use `.peek()` for the derived read instead.
 
 ## Derived state (Pillar A)
 
