@@ -16,6 +16,8 @@ Fingerprint the codebase, audit only the stacks actually present, then fix after
 
 The audit is **composable**: a codebase is not one label but a combination of independent axes (platform, framework/build, styling, component lib, state). Detect each axis, load the union of matching checklist modules, and report only what is in the code.
 
+**Every finding earns its place.** A checklist item tells you what to look for; it is not a verdict. A finding needs evidence from the code (see **Finding format**). No demonstrated consequence → it is at most a Suggestion. No evidence at all → it is not reported.
+
 ## Invocation
 
 ```text
@@ -36,17 +38,25 @@ Find every package in the repo (each `package.json`; a repo with several is a mo
 
 A vanilla HTML/CSS/JS site has no `package.json` — detect it by `.html` files with no framework dependency.
 
-**Done when:** every package has a fingerprint — a list of detected axis values, each mapped to its checklist module(s).
+For each package also record:
 
-### Step 2 — Confirm the fingerprint
+- **Installed versions** of the detected libraries — from the lockfile or `node_modules/<pkg>/package.json`, not the `package.json` range. Checklist rules marked with a version apply only to that version.
+- **Project conventions** — lint/format tool and its scripts, data-fetching layer, existing shared helpers (`cn()`, API client, form components), and whether a test runner and test files exist. A pattern the repo uses consistently and deliberately is a convention, not a finding, unless it causes a concrete problem.
 
-Print what was detected and stop for confirmation before reading any checklist:
+**Done when:** every package has a fingerprint — detected axis values with versions, each mapped to its checklist module(s), plus its conventions.
 
-> Detected in `apps/web`: **Next.js (App Router)**, **Tailwind**, **shadcn/ui**, **Legend State**. Auditing these. Correct? Anything to add or drop?
+### Step 2 — Confirm only what is ambiguous
 
-In a monorepo, list each package and ask which to audit. Do not proceed on a guess — a misread stack wastes the whole review.
+Print the fingerprint:
 
-**Done when:** the user has confirmed (or corrected) the fingerprint and chosen the package(s).
+> Detected in `apps/web`: **Next.js 15 (App Router)**, **Tailwind 4**, **shadcn/ui**, **Legend State 3**. Auditing these.
+
+Then **proceed without asking** when it is a single package with unambiguous signals, or the invocation already names the package, module, or scope. Stop and ask only when the answer would change the review:
+
+- several packages and none named — list them and ask which to audit;
+- conflicting signals — App and Pages routers together, two component libraries, a dependency with no usage, a named module whose axis was not detected.
+
+**Done when:** the package(s) and modules are fixed, by detection or by the user.
 
 ### Step 3 — Pick scope
 
@@ -62,11 +72,15 @@ Honor a scope already supplied by the user without asking again. With `--git-rev
 
 ### Step 4 — Load the matched modules
 
-Read only the checklist files the fingerprint matched (see [detection.md](detection.md) for the map). Skip every module whose axis is absent — a repo with no Legend State never opens `legend-state.md`.
+Always read [checklists/correctness.md](checklists/correctness.md) — it is stack-agnostic, even when a module arg narrows the rest. Then read only the checklist files the fingerprint matched (see [detection.md](detection.md) for the map). Skip every module whose axis is absent — a repo with no Legend State never opens `legend-state.md`.
 
 ### Step 5 — Review
 
 Apply every check in the loaded modules to the in-scope files. **Read actual file contents — never guess.** Cite exact `file:line`. If a pattern is not in the code, do not report it. Flag every instance, not just the first.
+
+- **Trace beyond the lines.** When a finding or a changed line touches an exported component, hook, type, or API call, read its callers and consumers and the contract it relies on (props, types, response shape). A locally fine change that breaks another screen is an Issue on the change.
+- **Check version and convention** before reporting a rule (Step 1). A rule written for another major version does not apply.
+- **Unverified ≠ reported as fact.** If a potentially serious problem cannot be confirmed from the code (needs runtime data, backend behavior, or a version you couldn't read), report it with **Confidence: Needs verification** and say what would confirm it.
 
 With `--git-review`, also inspect the actual diff and relevant surrounding code using [git-review.md](git-review.md). A changed-file list alone cannot establish whether a finding belongs in a PR comment.
 
@@ -76,26 +90,44 @@ With `--git-review`, also inspect the actual diff and relevant surrounding code 
 
 Report findings in the **Output format** below, then the **Priority matrix**, then a concrete fix plan. Present the plan and **wait for explicit approval** before editing anything.
 
+Each fix in the plan names how it will be checked:
+
+- **Tests exist** for the area → the specific scenario a test should cover, e.g. "an older search response cannot overwrite newer results". Never a generic "add tests".
+- **No tests** (the common case) → the same scenario as a manual check: the steps to reproduce the bug before the fix and confirm it is gone after.
+
 With `--git-review`, append **Git review comments** after the fix plan, using [git-review.md](git-review.md). Produce the complete report and comment drafts before waiting for approval to fix anything.
 
 ### Step 7 — Fix, then verify
 
-After approval, apply the fixes. Then verify per package: run its typecheck / lint / build (e.g. `tsc --noEmit`, the lint script, `next build`) and confirm the changes hold. Report what passed and what didn't — do not claim done on an unverified fix.
+After approval, apply the fixes. Before changing the props, types, or behavior of anything exported, find every consumer and update or confirm each one.
+
+Then verify per package: run its typecheck / lint / build (e.g. `tsc --noEmit`, the lint script, `next build`) and confirm the changes hold. Use the **non-writing** form of lint/format commands — drop `--write`/`--fix` (e.g. `biome check` not `biome check --write`) so verification doesn't rewrite unrelated files. Typecheck/lint/build don't catch behavior bugs: list the manual checks from the plan for the user to run, or run the named tests if they exist. Report what passed and what didn't — do not claim done on an unverified fix.
+
+## Finding format
+
+Every finding carries:
+
+- **Label**
+  - **Issue** — a demonstrated problem: a bug, regression, security or accessibility failure, or a measurable performance cost. Add **Severity**: High / Medium / Low.
+  - **Convention** — this org's or this repo's stated policy (e.g. Legend State's "use both pillars") is not followed, with no demonstrated failure. Becomes an Issue only when the code shows a concrete consequence.
+  - **Suggestion** — an architectural or maintainability improvement. Never presented as required.
+- **Confidence** — **Verified** (traced in the code) or **Needs verification** (what would confirm it). Kept separate from severity: a High-severity issue can still need verification.
+- **Evidence** — `file:line`, then:
+  - **Trigger** — when it happens (user action, data shape, network timing, version).
+  - **Observed** — what the code does now (quote the pattern).
+  - **Consequence** — what goes wrong or what is lost. Suggestions state the specific benefit instead.
+  - **Fix** — the corrected pattern, side by side with the current one.
+
+"Missing `useMemo`" without a consumer whose re-render is shown to matter is not a finding.
 
 ## Output format
 
-Group findings under three headings, **per stack module**:
-
-- **❌ Missing entirely** — a practice the stack expects that is absent
-- **⚠️ Used incorrectly or suboptimally** — present but wrong
-- **✅ Quick wins** — highest impact, lowest effort
-
-For each finding: exact `file:line`, the current pattern, and the corrected pattern side by side.
+Group findings **per stack module** (correctness first), and within each module by label: **Issues** (by severity), then **Conventions**, then **Suggestions**. List **Needs verification** findings under their label but mark them clearly. Consolidate identical instances (same cause, same fix) into one finding with all locations.
 
 ## Priority matrix
 
-Close with a table ranking the top 10 findings by impact ÷ effort, and mark the top 3 "fix these first":
+Close with a table ranking the top 10 findings by impact ÷ effort, and mark the top 3 "fix these first". Verified Issues rank above Conventions and Suggestions of similar effort:
 
-| # | Issue | File | Impact | Effort | Fix |
-|---|-------|------|--------|--------|-----|
-| 1 | … | `path:line` | High | Low | … |
+| # | Issue | Label | Confidence | File | Impact | Effort | Fix |
+|---|-------|-------|------------|------|--------|--------|-----|
+| 1 | … | Issue (High) | Verified | `path:line` | High | Low | … |

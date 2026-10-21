@@ -8,13 +8,13 @@
 ## Theming
 
 - All theme tokens defined in `globals.css` as CSS variables.
-- **HSL format** used consistently for colors.
-- Flag hardcoded hex/rgb values that should be CSS variables.
+- Color format consistent with the installed setup — HSL channels for Tailwind v3-era shadcn, OKLCH for Tailwind v4-era. Mixed formats are a Suggestion; don't demand one format over the other.
+- Hardcoded hex/rgb values that should be CSS variables — an Issue when they break dark mode or a theme; otherwise a Suggestion.
 
 ## Patterns
 
 - **`cva`** for variants in custom components (matches shadcn's own pattern).
 - Radix primitives used directly where no shadcn component exists, rather than reinventing.
 - Compound components used correctly (`Dialog.Root` + `Dialog.Trigger` + `Dialog.Content`, etc.).
-- **`react-hook-form`** integrated with shadcn `Form` components.
-- The `Form` component used for all forms — flag raw `<input>` where a `FormField` belongs.
+- **`react-hook-form`** integrated with shadcn `Form` components — only when `react-hook-form` is installed.
+- A raw `<input>` instead of `FormField` is an **Issue** only when its label or error message isn't associated with the input (accessibility). Otherwise a Suggestion that names the benefit (shared validation/error markup).

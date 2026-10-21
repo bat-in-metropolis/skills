@@ -17,7 +17,11 @@ Include verified bugs, regressions, security or accessibility issues, and meanin
 Use these labels:
 
 - **Issue** — a demonstrated correctness problem or concrete harmful consequence. Explain when it happens and why it matters.
-- **Suggestion (non-blocking)** — a useful improvement or documented project convention without a demonstrated correctness failure. Describe its specific benefit without implying it is required for correctness.
+- **Suggestion (non-blocking)** — a useful improvement or documented project convention without a demonstrated correctness failure. Describe its specific benefit without implying it is required for correctness. Audit findings labeled **Convention** or **Suggestion** use this label.
+
+Only **Verified** findings become comments. Findings marked **Needs verification** stay in the audit.
+
+When the changed behavior has no test and the package has a test setup, a comment may name the specific scenario a test should cover (for example, "an older search response must not overwrite newer results"). Never leave a generic "add tests" comment, and don't raise missing tests in a package that has no test setup.
 
 A checklist preference is not evidence of a bug. For example, preferring a Legend primitive over an equivalent working React pattern is a suggestion unless the actual code demonstrates broken reactivity or another concrete consequence. Omit cosmetic nits by default, speculative problems, and unsupported performance claims. Keep unresolved questions or verification gaps in the audit report instead of presenting them as confirmed comments. Do not manufacture comments when no finding qualifies.
 

@@ -12,6 +12,10 @@ The strongest finding here is **partial adoption** — paying for the library wh
 
 Report partial adoption first; the micro-checks below are how you find it.
 
+**Labeling.** This stance is org policy, so a working plain-React pattern where Legend is preferred is a **Convention** finding. It becomes an **Issue** only when the code shows the consequence — an unwrapped component reading `.get()` that doesn't update, a snapshot that loses reactivity, a measured re-render cost, two stores disagreeing.
+
+**Versions.** v2 and v3 APIs differ (e.g. `persistObservable` → `synced`/`syncObservable`, reactive component imports). Read the installed version and only recommend APIs that exist in it.
+
 ## Reactive components (Pillar B)
 
 - **`observer()`** — every component that reads an observable must be wrapped. An unwrapped component reading `.get()` will not re-render reactively.
@@ -52,7 +56,7 @@ Report partial adoption first; the micro-checks below are how you find it.
 
 ## Derived state (Pillar A)
 
-- `computed()` for **all** derived state. Flag any value recalculated inline in a component that should be a `computed()`.
+- `computed()` for derived state (Convention). A value recalculated inline is worth reporting when it is shared across components or expensive; a cheap local derivation is fine.
 - `linked()` for two-way derived state.
 
 ## Side effects

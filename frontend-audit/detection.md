@@ -1,6 +1,8 @@
 # Detection rules
 
-Resolve each axis independently from the signals below, then load the union of the matched modules. Axes are orthogonal — styling does not depend on framework, state does not depend on platform — except the one interaction noted at the end.
+`checklists/correctness.md` is always loaded; it belongs to no axis.
+
+Resolve each axis independently from the signals below, then load the union of the matched modules. Record the installed major version of each match — modules mark version-specific rules, and the fingerprint must say which apply. Axes are orthogonal — styling does not depend on framework, state does not depend on platform — except the one interaction noted at the end.
 
 ## Axis 1 — Platform
 
@@ -32,7 +34,7 @@ Multiple may apply; load all that match.
 
 | Value | Signal | Loads |
 |---|---|---|
-| Tailwind (web) | `tailwindcss` dep + `tailwind.config.*` on a web platform | `tailwind.md` |
+| Tailwind (web) | `tailwindcss` dep on a web platform. v3: `tailwind.config.*`. v4: often no config file — CSS `@import "tailwindcss"` / `@theme`, `@tailwindcss/postcss` or `@tailwindcss/vite` dep. A missing config file does **not** mean Tailwind is absent. | `tailwind.md` |
 | NativeWind | `nativewind` dep | `nativewind.md` |
 | CSS modules / styled-components / plain CSS | `*.module.css`, `styled-components` dep, plain `.css` | (covered inside framework module) |
 
@@ -40,7 +42,8 @@ Multiple may apply; load all that match.
 
 | Value | Signal | Loads |
 |---|---|---|
-| shadcn/ui | `components/ui/` dir + `class-variance-authority` + `components.json` | `shadcn.md` |
+| shadcn/ui | `components/ui/` dir + `class-variance-authority` + `components.json` (or `@radix-ui/*` + `cva` + `components/ui/` when `components.json` is missing) | `shadcn.md` |
+| Other libraries (antd, MUI, Chakra, Mantine, …) | the dep is present | (no module) — record it. If it coexists with shadcn or another library, report the split under the Step 2 conflicting-signals rule. |
 
 ## Axis 5 — State
 

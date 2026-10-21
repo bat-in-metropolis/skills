@@ -18,7 +18,7 @@ Loaded for the legacy `pages/` router (alongside `react-core.md`). If `app/` als
 ## SEO & assets
 
 - `next/head` for per-page metadata.
-- **`next/image`** for all images — flag raw `<img>`.
+- **`next/image`** — same rule as `nextjs-app.md`: a raw `<img>` is an Issue only for LCP/large/unsized images; otherwise a Suggestion.
 - **`next/font`** — flag `@import`/`<link>` font loading.
 
 ## Migration note

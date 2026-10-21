@@ -6,10 +6,10 @@ Language-level React, identical across Next.js, Vite, webpack/CRA, and React Nat
 
 ## Hooks
 
-- **Effect dependency arrays** — flag missing deps, lying deps (`// eslint-disable`), and effects that should not be effects at all (deriving state, transforming props → compute during render instead).
+- **Effect dependency arrays** — flag missing deps, lying deps (`// eslint-disable`, `biome-ignore`), and effects that should not be effects at all (deriving state, transforming props → compute during render instead).
 - **Effects that should be event handlers** — logic reacting to a user action belongs in the handler, not an effect watching the result.
 - **`useState` for derived values** — values computable from props/other state should be computed during render, not stored and synced.
-- **Stable identities** — `useCallback`/`useMemo` only where identity actually matters (deps of other hooks, memoized children). Flag both missing-where-needed and cargo-cult-everywhere.
+- **Stable identities** — `useCallback`/`useMemo` only where identity actually matters (deps of other hooks, memoized children). Flag both missing-where-needed and cargo-cult-everywhere. "Missing" needs the consumer that re-renders or the effect that re-fires; if React Compiler is enabled, manual memoization is mostly unneeded.
 - **Custom hooks** — repeated hook sequences extracted into a named `useX` hook.
 
 ## Rendering & re-renders
@@ -26,6 +26,8 @@ Language-level React, identical across Next.js, Vite, webpack/CRA, and React Nat
 - **Controlled vs uncontrolled** inputs chosen deliberately, not mixed on one field.
 
 ## Correctness
+
+Async, cleanup, and UI-state bugs (races, stale closures, failed requests, double submits, loading/error/empty states) live in `correctness.md`, which is always loaded. This section is React-specific only.
 
 - **No state mutation** — arrays/objects in state updated immutably.
 - **Error boundaries** around risky subtrees.
