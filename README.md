@@ -44,12 +44,20 @@ shadcn/ui, and Legend State.
 ```
 /frontend-audit                # detect stack, confirm, pick scope (PR/staged/repo), review → plan → fix
 /frontend-audit legend-state   # scope the audit to one module
+/frontend-audit --git-review   # audit the PR diff and also draft paste-ready review comments
+/frontend-audit legend-state --git-review # combine the module filter and review comments
 ```
 
 The flow: detect (per package, monorepo-aware) → confirm the fingerprint → pick scope
 → review → present plan → **wait for approval** → fix → verify. Checklist modules live
 in `frontend-audit/checklists/` and load on demand; detection rules are in
 `frontend-audit/detection.md`.
+
+`--git-review` defaults to the current PR diff; an explicit scope such as
+`staged changes` or `whole package` overrides it. It keeps the normal audit and fix
+plan, then adds comments with verified locations and copyable bodies. Comments
+cover bugs and meaningful improvements, with optional suggestions marked
+non-blocking. It drafts comments for you to paste; it does not submit a review.
 
 ---
 
